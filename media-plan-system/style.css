@@ -1,0 +1,133 @@
+/* ===== CUSTOM STYLES ===== */
+
+:root {
+  --primary: #1e40af;
+  --primary-light: #3b82f6;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --bg: #f1f5f9;
+}
+
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; }
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+/* ---- Nav ---- */
+.nav-logo { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+
+/* ---- Status Badges ---- */
+.badge-draft    { background:#e2e8f0; color:#475569; }
+.badge-sent     { background:#dbeafe; color:#1e40af; }
+.badge-approved { background:#d1fae5; color:#065f46; }
+.badge-rejected { background:#fee2e2; color:#991b1b; }
+.badge-expired  { background:#fef3c7; color:#92400e; }
+
+/* ---- Editor Table ---- */
+.media-table { border-collapse: separate; border-spacing: 0; }
+.media-table th { background: #1e40af; color: white; position: sticky; top: 0; z-index: 2; }
+.media-table td { vertical-align: middle; }
+.media-table tbody tr:hover { background: #f8fafc; }
+.media-table td input, .media-table td select {
+  width: 100%; border: none; background: transparent;
+  outline: none; font-size: 13px; padding: 4px 6px;
+}
+.media-table td input:focus, .media-table td select:focus {
+  background: #eff6ff; border-radius: 4px;
+}
+
+/* ---- Section Cards ---- */
+.section-card {
+  background: white; border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  padding: 24px; margin-bottom: 20px;
+}
+.section-title {
+  font-size: 15px; font-weight: 700; color: #1e40af;
+  border-left: 4px solid #1e40af;
+  padding-left: 12px; margin-bottom: 18px;
+}
+
+/* ---- Finance Summary ---- */
+.finance-table td { padding: 8px 12px; }
+.finance-table .total-row { background: #1e40af; color: white; font-weight: 700; font-size: 16px; }
+
+/* ---- Tabs ---- */
+.tab-btn { border-bottom: 3px solid transparent; transition: all .2s; }
+.tab-btn.active { border-bottom-color: #1e40af; color: #1e40af; font-weight: 600; }
+.tab-btn:hover:not(.active) { border-bottom-color: #93c5fd; }
+
+/* ---- Buttons ---- */
+.btn-primary { background: #1e40af; color: white; transition: background .2s; }
+.btn-primary:hover { background: #1d3a9f; }
+.btn-success { background: #10b981; color: white; }
+.btn-success:hover { background: #059669; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-danger:hover { background: #dc2626; }
+.btn-outline { border: 2px solid #1e40af; color: #1e40af; background: white; transition: all .2s; }
+.btn-outline:hover { background: #1e40af; color: white; }
+
+/* ---- Modal ---- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 16px;
+}
+.modal-box {
+  background: white; border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  max-height: 90vh; overflow-y: auto;
+}
+
+/* ---- Dashboard Cards ---- */
+.stat-card {
+  background: white; border-radius: 12px;
+  padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+/* ---- Empty State ---- */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: #94a3b8;
+}
+
+/* ---- Toast Notification ---- */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  z-index: 9999; transition: all .3s;
+  transform: translateY(100px); opacity: 0;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  body { background: white !important; }
+  #topNav, .no-print { display: none !important; }
+  #previewView { padding: 0 !important; }
+  .preview-doc { box-shadow: none !important; max-width: 100% !important; }
+  .page-break { page-break-before: always; }
+}
+
+/* ---- Preview Document ---- */
+.preview-doc {
+  background: white; max-width: 900px;
+  margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.preview-header { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 32px; }
+.preview-table th { background: #1e40af; color: white; font-size: 12px; }
+.preview-table td { font-size: 12px; border: 1px solid #e2e8f0; padding: 8px 10px; }
+.preview-table tr:nth-child(even) td { background: #f8fafc; }
+
+/* ---- Chart container ---- */
+#budgetChart { max-height: 280px; }
+
+/* ---- Drag handle ---- */
+.drag-handle { cursor: grab; color: #94a3b8; }
+.drag-handle:active { cursor: grabbing; }
+
+/* ---- Number input ---- */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
