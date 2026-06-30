@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Plan Pro – Hệ thống Báo giá & Kế hoạch Media</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<!-- ============================================================
+     TOP NAVIGATION
+     ============================================================ -->
+<nav id="topNav" class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+  <div class="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="nav-logo text-white font-bold text-lg px-4 py-1.5 rounded-lg flex items-center gap-2 cursor-pointer" onclick="renderDashboard()">
+        <i class="fas fa-chart-line text-sm"></i>
+        <span>Media Plan Pro</span>
+      </div>
+      <button id="navBack" onclick="renderDashboard()" class="hidden text-slate-500 hover:text-blue-700 flex items-center gap-1 text-sm">
+        <i class="fas fa-arrow-left"></i> Danh sách
+      </button>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Dashboard actions -->
+      <div id="dashActions" class="flex items-center gap-2">
+        <div class="relative">
+          <input id="searchInput" type="text" placeholder="Tìm kiếm báo giá..."
+            class="pl-8 pr-4 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-400 w-52">
+          <i class="fas fa-search absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+        </div>
+        <button onclick="newQuoteAction()"
+          class="btn-primary px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
+          <i class="fas fa-plus"></i> Tạo media plan mới
+        </button>
+        <button onclick="openSettings()" class="text-slate-500 hover:text-blue-700 px-2 py-1.5" title="Cài đặt">
+          <i class="fas fa-cog text-lg"></i>
+        </button>
+      </div>
+      <!-- Editor actions -->
+      <div id="editorActions" class="hidden flex items-center gap-2">
+        <select id="editorStatusSelect" onchange="state.currentQuote.status=this.value"
+          class="border border-slate-200 rounded-lg text-sm px-3 py-1.5 focus:outline-none focus:border-blue-400">
+          <option value="draft">Nháp</option>
+          <option value="sent">Đã gửi</option>
+          <option value="approved">Đã duyệt</option>
+          <option value="rejected">Từ chối</option>
+        </select>
+        <button onclick="saveQuote()" class="btn-primary px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
+          <i class="fas fa-save"></i> Lưu
+        </button>
+        <button onclick="previewCurrentQuote()" class="btn-success px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
+          <i class="fas fa-eye"></i> Xem & In
+        </button>
+      </div>
+      <!-- Preview actions -->
+      <div id="previewActions" class="hidden flex items-center gap-2">
+        <button onclick="window.print()" class="btn-primary px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
+          <i class="fas fa-print"></i> In / Xuất PDF
+        </button>
+        <button onclick="goBackFromPreview()" class="btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">
+          <i class="fas fa-edit mr-1"></i> Chỉnh sửa
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     DASHBOARD VIEW
+     ============================================================ -->
+<div id="dashboardView" class="max-w-screen-xl mx-auto px-4 py-6">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-slate-500 text-sm">Tổng media plan</span>
+        <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-file-alt text-blue-600 text-sm"></i>
+        </div>
+      </div>
+      <div id="statTotal" class="text-3xl font-bold text-slate-800">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-slate-500 text-sm">Đã duyệt</span>
+        <div class="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-check-circle text-emerald-600 text-sm"></i>
+        </div>
+      </div>
+      <div id="statApproved" class="text-3xl font-bold text-emerald-600">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-slate-500 text-sm">Tổng ngân sách</span>
+        <div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-coins text-amber-600 text-sm"></i>
+        </div>
+      </div>
+      <div id="statBudget" class="text-xl font-bold text-slate-800">0 đ</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-slate-500 text-sm">Đang triển khai</span>
+        <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-rocket text-purple-600 text-sm"></i>
+        </div>
+      </div>
+      <div id="statActive" class="text-3xl font-bold text-purple-600">0</div>
+    </div>
+  </div>
+
+  <!-- Quick Start Templates -->
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
+    <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+        <i class="fas fa-bolt text-amber-500"></i> Tạo nhanh từ template
+      </h2>
+    </div>
+    <div class="px-6 py-4 flex flex-wrap gap-3">
+      <button onclick="loadTemplate('ecommerce_fashion')" class="template-quick-btn flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-pink-200 bg-pink-50 hover:bg-pink-100 text-pink-700 text-sm font-medium transition-all">
+        👗 E-commerce Thời Trang
+      </button>
+      <button onclick="loadTemplate('saas_b2b')" class="template-quick-btn flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium transition-all">
+        💼 SaaS B2B Lead Gen
+      </button>
+      <button onclick="loadTemplate('fnb_coffee')" class="template-quick-btn flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium transition-all">
+        ☕ F&B Khai trương
+      </button>
+      <button onclick="startBlankQuote()" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-slate-200 hover:border-slate-400 text-slate-500 hover:text-slate-700 text-sm font-medium transition-all">
+        <i class="fas fa-file-alt text-xs"></i> Blank mới
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+        <i class="fas fa-list text-blue-600"></i> Danh sách Media Plan
+      </h2>
+      <button onclick="newQuoteAction()" class="btn-primary px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5">
+        <i class="fas fa-plus"></i> Tạo mới
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-100">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-slate-600">Số báo giá</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-600">Khách hàng</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-600">Chiến dịch</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-600">Tổng thanh toán</th>
+            <th class="px-4 py-3 text-center font-semibold text-slate-600">Trạng thái</th>
+            <th class="px-4 py-3 text-center font-semibold text-slate-600">Ngày tạo</th>
+            <th class="px-4 py-3 text-center font-semibold text-slate-600">Hiệu lực</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-600">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="quoteTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     EDITOR VIEW
+     ============================================================ -->
+<div id="editorView" class="hidden max-w-screen-xl mx-auto px-4 py-6">
+
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 id="editorTitle" class="text-2xl font-bold text-slate-800">Báo giá mới</h1>
+      <div id="editorStatus" class="mt-1"></div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 text-xs text-slate-500">
+        <span>Hoàn thành:</span>
+        <div class="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-2 rounded-full transition-all duration-500 bg-slate-400" style="width:0%"></div>
+        </div>
+        <span id="progressPct" class="font-semibold text-slate-700 w-8">0%</span>
+      </div>
+      <div class="text-xs text-slate-400 hidden md:block">
+        6 sheets · Auto-save
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation (7 tabs, scrollable) -->
+  <div class="tab-nav border-b border-slate-200 mb-6 flex gap-0">
+    <button id="tab_general"  class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('general')">
+      <i class="fas fa-info-circle mr-1.5 text-xs"></i>Thông tin
+    </button>
+    <button id="tab_quote"    class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('quote')">
+      <i class="fas fa-file-invoice-dollar mr-1.5 text-xs"></i>Báo giá
+    </button>
+    <button id="tab_roadmap"  class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('roadmap')">
+      <i class="fas fa-calendar-alt mr-1.5 text-xs"></i>Road Map
+    </button>
+    <button id="tab_kpi"      class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('kpi')">
+      <i class="fas fa-chart-bar mr-1.5 text-xs"></i>KPI dự kiến
+    </button>
+    <button id="tab_keyword"  class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('keyword')">
+      <i class="fas fa-search mr-1.5 text-xs"></i>Keyword
+    </button>
+    <button id="tab_audience" class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('audience')">
+      <i class="fas fa-users mr-1.5 text-xs"></i>Audience
+    </button>
+    <button id="tab_content"  class="tab-btn px-5 py-3 text-sm font-medium text-slate-500 transition-all" onclick="switchTab('content')">
+      <i class="fas fa-paint-brush mr-1.5 text-xs"></i>Content & Design
+    </button>
+  </div>
+
+  <!-- ============================================================
+       TAB: THÔNG TIN CHUNG
+       ============================================================ -->
+  <div id="tabContent_general" class="hidden">
+
+    <div class="section-card">
+      <div class="section-title">Thông tin báo giá</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Số báo giá</label>
+          <input id="f_quoteNumber" type="text" placeholder="MP2024-001"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Trạng thái</label>
+          <select id="f_status" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            <option value="draft">Nháp</option><option value="sent">Đã gửi</option>
+            <option value="approved">Đã duyệt</option><option value="rejected">Từ chối</option><option value="expired">Hết hạn</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Ngày lập</label>
+          <input id="f_createdAt" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Hiệu lực đến</label>
+          <input id="f_validUntil" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-4 mt-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Account Manager</label>
+          <input id="f_accountManager" type="text" placeholder="Họ và tên"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Điện thoại AM</label>
+          <input id="f_accountPhone" type="text" placeholder="0901 234 567"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Email AM</label>
+          <input id="f_accountEmail" type="email" placeholder="am@agency.vn"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Thông tin khách hàng</div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tên công ty <span class="text-red-400">*</span></label>
+          <input id="f_clientCompany" type="text" placeholder="Công ty TNHH ABC..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Ngành nghề</label>
+          <select id="f_clientIndustry" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            <option value="">Chọn ngành...</option>
+            <option>Thực phẩm & Đồ uống</option><option>Thời trang & Phụ kiện</option>
+            <option>Mỹ phẩm & Sức khỏe</option><option>Bất động sản</option>
+            <option>Tài chính & Ngân hàng</option><option>Bảo hiểm</option>
+            <option>Giáo dục & Đào tạo</option><option>Du lịch & Khách sạn</option>
+            <option>Công nghệ & Phần mềm</option><option>Ô tô & Xe máy</option>
+            <option>Nội thất & Gia dụng</option><option>Thể thao & Giải trí</option>
+            <option>Y tế & Dược phẩm</option><option>FMCG</option>
+            <option>E-commerce</option><option>Khác</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Người liên hệ</label>
+          <input id="f_clientContact" type="text" placeholder="Nguyễn Văn A"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Chức vụ</label>
+          <input id="f_clientPosition" type="text" placeholder="Marketing Manager"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Điện thoại</label>
+          <input id="f_clientPhone" type="text" placeholder="0901 234 567"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Email</label>
+          <input id="f_clientEmail" type="email" placeholder="marketing@client.vn"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Địa chỉ</label>
+          <input id="f_clientAddress" type="text" placeholder="123 Đường XYZ, Quận 1, TP.HCM"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Thông tin chiến dịch</div>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tên chiến dịch <span class="text-red-400">*</span></label>
+          <input id="f_campaignName" type="text" placeholder="VD: Ra mắt sản phẩm ABC – Quý 3/2024"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Ngày bắt đầu</label>
+          <input id="f_startDate" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Ngày kết thúc</label>
+          <input id="f_endDate" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Độ tuổi mục tiêu</label>
+          <input id="f_ageRange" type="text" placeholder="18-45"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Giới tính</label>
+          <select id="f_gender" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            <option value="all">Tất cả</option><option value="male">Nam</option><option value="female">Nữ</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Khu vực địa lý</label>
+          <input id="f_location" type="text" placeholder="VD: Toàn quốc / TP.HCM, Hà Nội"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Đối tượng mục tiêu (Target Audience)</label>
+          <textarea id="f_targetAudience" rows="2" placeholder="VD: Phụ nữ 25-40 tuổi, quan tâm đến làm đẹp, thu nhập trung-cao..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-2.5">Mục tiêu chiến dịch</label>
+        <div class="flex flex-wrap gap-2">
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Brand_Awareness" class="accent-blue-600"> Brand Awareness</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Reach_&_Frequency" class="accent-blue-600"> Reach & Frequency</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Traffic" class="accent-blue-600"> Traffic</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Engagement" class="accent-blue-600"> Engagement</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Lead_Generation" class="accent-blue-600"> Lead Generation</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_App_Install" class="accent-blue-600"> App Install</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Video_Views" class="accent-blue-600"> Video Views</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Conversions" class="accent-blue-600"> Conversions</label>
+          <label class="flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 cursor-pointer text-sm transition-colors">
+            <input type="checkbox" id="obj_Sales" class="accent-blue-600"> Sales</label>
+        </div>
+      </div>
+      <div class="mt-4">
+        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Ghi chú chiến dịch</label>
+        <textarea id="f_campaignNotes" rows="2" placeholder="Brief ngắn gọn, yêu cầu đặc biệt..."
+          class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: SHEET 1 – BÁO GIÁ CHI PHÍ
+       ============================================================ -->
+  <div id="tabContent_quote" class="hidden">
+    <div class="grid grid-cols-3 gap-4">
+
+      <!-- LEFT: Media plan -->
+      <div class="col-span-2">
+        <!-- Summary row -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="section-card flex flex-col">
+            <div class="section-title" style="margin-bottom:12px">Phân bổ ngân sách theo kênh</div>
+            <canvas id="budgetChart" style="max-height:220px;flex:1"></canvas>
+          </div>
+          <div class="section-card">
+            <div class="section-title" style="margin-bottom:12px">Tổng hợp nhanh</div>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <span class="text-slate-500">Số kênh:</span>
+                <span id="mediaChannelCount" class="font-bold text-blue-700">0 kênh</span>
+              </div>
+              <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <span class="text-slate-500">Tổng ngân sách media:</span>
+                <span id="mediaSubtotal" class="font-bold text-slate-800">0 đ</span>
+              </div>
+              <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+                <p class="text-xs text-blue-600 font-medium">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  Nhập ngân sách hoặc số lượng để tự động tính chéo.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Media Table -->
+        <div class="section-card p-0">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+              <i class="fas fa-table text-blue-600"></i> Chi tiết kế hoạch truyền thông
+            </h3>
+            <button onclick="addMediaRow()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+              <i class="fas fa-plus"></i> Thêm kênh
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="media-table w-full text-sm" style="min-width:900px">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 text-center w-8 text-xs">#</th>
+                  <th class="px-3 py-3 text-left text-xs">Kênh truyền thông</th>
+                  <th class="px-3 py-3 text-left text-xs">Định dạng</th>
+                  <th class="px-3 py-3 text-left text-xs">Mục tiêu KPI</th>
+                  <th class="px-3 py-3 text-center text-xs">Loại giá</th>
+                  <th class="px-3 py-3 text-right text-xs">Đơn giá (đ)</th>
+                  <th class="px-3 py-3 text-right text-xs">Số lượng</th>
+                  <th class="px-3 py-3 text-right text-xs">Ngân sách (đ)</th>
+                  <th class="px-3 py-3 text-center text-xs">Thời gian</th>
+                  <th class="px-3 py-3 w-8"></th>
+                </tr>
+              </thead>
+              <tbody id="mediaTbody">
+                <tr id="emptyMediaRow">
+                  <td colspan="10" class="py-10 text-center text-slate-400">
+                    <i class="fas fa-plus-circle text-3xl mb-2 block text-slate-300"></i>
+                    Chưa có kênh nào. Bấm "+ Thêm kênh" để bắt đầu.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-sm">
+            <span class="text-slate-500 text-xs">
+              <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+              CPM: /1.000 impressions | CPC: /click | CPV: /view | Fixed: trọn gói
+            </span>
+            <div class="flex items-center gap-3">
+              <span class="text-slate-500 text-sm">Tổng ngân sách Media:</span>
+              <span id="mediaSubtotalFooter" class="font-bold text-blue-700 text-base">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Add -->
+        <div class="section-card mt-4">
+          <div class="section-title" style="margin-bottom:12px">Thêm nhanh kênh phổ biến</div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="quickAddChannel('facebook')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-sm transition-colors">📘 Facebook Ads</button>
+            <button onclick="quickAddChannel('instagram')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-pink-300 hover:bg-pink-50 text-sm transition-colors">📸 Instagram Ads</button>
+            <button onclick="quickAddChannel('gg_search')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 text-sm transition-colors">🔍 Google Search</button>
+            <button onclick="quickAddChannel('gg_display')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 text-sm transition-colors">🖥️ Google Display</button>
+            <button onclick="quickAddChannel('youtube')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 text-sm transition-colors">▶️ YouTube Ads</button>
+            <button onclick="quickAddChannel('tiktok')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-sm transition-colors">🎵 TikTok Ads</button>
+            <button onclick="quickAddChannel('zalo')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-sm transition-colors">💬 Zalo Ads</button>
+            <button onclick="quickAddChannel('influencer')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-amber-300 hover:bg-amber-50 text-sm transition-colors">⭐ Influencer</button>
+            <button onclick="quickAddChannel('ooh')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-sm transition-colors">🏙️ OOH/Billboard</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Finance sidebar -->
+      <div>
+        <div class="section-card sticky top-20">
+          <div class="section-title" style="margin-bottom:14px">Cài đặt tài chính</div>
+          <div class="space-y-4 mb-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Phí quản lý / Agency Fee (%)</label>
+              <div class="flex items-center gap-2">
+                <input id="f_agencyFeeRate" type="number" min="0" max="100" step="0.5" value="15"
+                  class="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 text-right">
+                <span class="text-slate-500 text-xs">% trên media</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Chiết khấu (%)</label>
+              <div class="flex items-center gap-2">
+                <input id="f_discountRate" type="number" min="0" max="100" step="0.5" value="0"
+                  class="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 text-right">
+                <input id="f_discountNote" type="text" placeholder="Lý do..."
+                  class="flex-1 border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-blue-400">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Thuế VAT (%)</label>
+              <div class="flex items-center gap-2">
+                <input id="f_vatRate" type="number" min="0" max="20" step="1" value="10"
+                  class="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 text-right">
+                <span class="text-slate-500 text-xs">% (thường 10%)</span>
+              </div>
+            </div>
+          </div>
+
+          <table class="finance-table w-full rounded-xl overflow-hidden border border-slate-200 text-sm mb-5">
+            <tr class="border-b border-slate-100">
+              <td class="text-slate-500">Tổng ngân sách Media</td>
+              <td id="fin_subtotal" class="text-right font-medium text-slate-800">0 đ</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="text-slate-500">Phí quản lý</td>
+              <td id="fin_agencyFee" class="text-right text-slate-800">0 đ</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="text-slate-500">Chiết khấu</td>
+              <td id="fin_discount" class="text-right text-emerald-600">0 đ</td>
+            </tr>
+            <tr class="border-b border-slate-200 bg-slate-50">
+              <td class="font-medium text-slate-700 py-2">Tổng trước thuế</td>
+              <td id="fin_beforeVAT" class="text-right font-medium text-slate-800">0 đ</td>
+            </tr>
+            <tr class="border-b border-slate-100">
+              <td class="text-slate-500">VAT</td>
+              <td id="fin_vat" class="text-right text-slate-800">0 đ</td>
+            </tr>
+            <tr class="total-row rounded-b-xl">
+              <td class="px-4 py-3 font-bold">TỔNG THANH TOÁN</td>
+              <td id="fin_total" class="px-4 py-3 text-right font-bold text-lg">0 đ</td>
+            </tr>
+          </table>
+
+          <div class="flex flex-col gap-2">
+            <button onclick="saveQuote()" class="btn-primary w-full py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm">
+              <i class="fas fa-save"></i> Lưu báo giá
+            </button>
+            <button onclick="previewCurrentQuote()" class="btn-success w-full py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm">
+              <i class="fas fa-file-pdf"></i> Xem trước & Xuất PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="section-card mt-4">
+          <div class="section-title" style="margin-bottom:10px">Điều khoản & Điều kiện</div>
+          <textarea id="f_termsAndConditions" rows="4" placeholder="Nhập điều khoản thanh toán..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+        </div>
+
+        <div class="section-card mt-4">
+          <div class="section-title" style="margin-bottom:10px">Ghi chú nội bộ <span class="text-slate-400 font-normal text-xs">(không in ra)</span></div>
+          <textarea id="f_internalNotes" rows="3" placeholder="Ghi chú nội bộ..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: SHEET 2 – ROAD MAP 3 THÁNG
+       ============================================================ -->
+  <div id="tabContent_roadmap" class="hidden">
+
+    <div class="flex justify-end mb-3">
+      <button onclick="aiSuggestRoadmap()" class="ai-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <i class="fas fa-magic"></i> AI Tạo Roadmap mẫu
+      </button>
+    </div>
+    <div class="section-card mb-5">
+      <div class="section-title" style="margin-bottom:12px">Đặt tên các tháng</div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tháng 1</label>
+          <input id="rm_month_name_1" type="text" value="Tháng 1"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tháng 2</label>
+          <input id="rm_month_name_2" type="text" value="Tháng 2"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tháng 3</label>
+          <input id="rm_month_name_3" type="text" value="Tháng 3"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 font-medium">
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex flex-wrap gap-3 mb-4 px-1">
+      <span class="text-xs text-slate-500 font-semibold mr-1">Loại hoạt động:</span>
+      <span class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">● Lên kế hoạch</span>
+      <span class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">● Sản xuất Creative</span>
+      <span class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">● Triển khai</span>
+      <span class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700">● Tối ưu hóa</span>
+      <span class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600">● Báo cáo</span>
+      <span class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">● Họp & Review</span>
+    </div>
+
+    <!-- 3 Month Columns -->
+    <div class="grid grid-cols-3 gap-4">
+
+      <!-- Month 1 -->
+      <div class="rm-month-col">
+        <div class="rm-month-header">
+          <div class="font-bold text-base" id="rm_month_label_1">Tháng 1</div>
+          <div class="mt-1.5" id="rm_channels_1"></div>
+        </div>
+        <div class="rm-month-body">
+          <div id="rm_activities_1" class="mb-3">
+            <div class="text-slate-400 text-sm text-center py-6 italic">Chưa có hoạt động</div>
+          </div>
+          <button onclick="addActivity(1)"
+            class="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-400 hover:border-blue-400 hover:text-blue-600 text-sm transition-colors flex items-center justify-center gap-1.5">
+            <i class="fas fa-plus text-xs"></i> Thêm hoạt động
+          </button>
+        </div>
+      </div>
+
+      <!-- Month 2 -->
+      <div class="rm-month-col">
+        <div class="rm-month-header">
+          <div class="font-bold text-base" id="rm_month_label_2">Tháng 2</div>
+          <div class="mt-1.5" id="rm_channels_2"></div>
+        </div>
+        <div class="rm-month-body">
+          <div id="rm_activities_2" class="mb-3">
+            <div class="text-slate-400 text-sm text-center py-6 italic">Chưa có hoạt động</div>
+          </div>
+          <button onclick="addActivity(2)"
+            class="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-400 hover:border-blue-400 hover:text-blue-600 text-sm transition-colors flex items-center justify-center gap-1.5">
+            <i class="fas fa-plus text-xs"></i> Thêm hoạt động
+          </button>
+        </div>
+      </div>
+
+      <!-- Month 3 -->
+      <div class="rm-month-col">
+        <div class="rm-month-header">
+          <div class="font-bold text-base" id="rm_month_label_3">Tháng 3</div>
+          <div class="mt-1.5" id="rm_channels_3"></div>
+        </div>
+        <div class="rm-month-body">
+          <div id="rm_activities_3" class="mb-3">
+            <div class="text-slate-400 text-sm text-center py-6 italic">Chưa có hoạt động</div>
+          </div>
+          <button onclick="addActivity(3)"
+            class="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-400 hover:border-blue-400 hover:text-blue-600 text-sm transition-colors flex items-center justify-center gap-1.5">
+            <i class="fas fa-plus text-xs"></i> Thêm hoạt động
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: SHEET 3 – KPI DỰ KIẾN
+       ============================================================ -->
+  <div id="tabContent_kpi" class="hidden">
+
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <p class="text-slate-500 text-sm">Dự kiến chỉ số dựa trên benchmark thị trường. Bạn có thể chỉnh sửa từng ô.</p>
+      </div>
+      <button onclick="autoCalcKPI(true)"
+        class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <i class="fas fa-sync-alt"></i> Tự động tính từ Media Plan
+      </button>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-5 gap-3 mb-4">
+      <div class="kpi-sum-card">
+        <div class="text-xs text-slate-500 mb-1">Tổng Impressions</div>
+        <div id="kpi_impressions" class="text-lg font-bold text-blue-700">—</div>
+      </div>
+      <div class="kpi-sum-card">
+        <div class="text-xs text-slate-500 mb-1">Tổng Reach</div>
+        <div id="kpi_reach" class="text-lg font-bold text-green-600">—</div>
+      </div>
+      <div class="kpi-sum-card">
+        <div class="text-xs text-slate-500 mb-1">Tổng Clicks</div>
+        <div id="kpi_clicks" class="text-lg font-bold text-amber-600">—</div>
+      </div>
+      <div class="kpi-sum-card">
+        <div class="text-xs text-slate-500 mb-1">Tổng Conversions</div>
+        <div id="kpi_conversions" class="text-lg font-bold text-purple-600">—</div>
+      </div>
+      <div class="kpi-sum-card">
+        <div class="text-xs text-slate-500 mb-1">CPA trung bình</div>
+        <div id="kpi_cpa" class="text-lg font-bold text-slate-700">—</div>
+      </div>
+    </div>
+
+    <!-- KPI Table -->
+    <div class="section-card p-0">
+      <div class="overflow-x-auto">
+        <table class="kpi-table w-full text-sm" style="min-width:900px">
+          <thead>
+            <tr>
+              <th class="px-3 py-3 text-left">Kênh</th>
+              <th class="px-3 py-3 text-right">Ngân sách</th>
+              <th class="px-3 py-3 text-right">Impressions</th>
+              <th class="px-3 py-3 text-right">Reach</th>
+              <th class="px-3 py-3 text-right">Clicks</th>
+              <th class="px-3 py-3 text-center">CTR (%)</th>
+              <th class="px-3 py-3 text-right">CPC (đ)</th>
+              <th class="px-3 py-3 text-right">Conversions</th>
+              <th class="px-3 py-3 text-right">CPA (đ)</th>
+              <th class="px-3 py-3 text-left">Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody id="kpiTbody">
+            <tr><td colspan="10" class="py-10 text-center text-slate-400">
+              <i class="fas fa-chart-bar text-3xl mb-2 block text-slate-300"></i>
+              Bấm "Tự động tính từ Media Plan" để tạo KPI dự kiến
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card mt-4">
+      <div class="section-title" style="margin-bottom:10px">Ghi chú KPI</div>
+      <textarea id="f_kpiNotes" rows="3" placeholder="Ghi chú về các chỉ số, giả định, điều kiện đặc biệt..."
+        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+      <p class="text-xs text-slate-400 mt-2">
+        <i class="fas fa-info-circle mr-1"></i>
+        Số liệu tự động tính dựa trên benchmark trung bình thị trường VN. Kết quả thực tế có thể thay đổi.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: SHEET 4 – KEYWORD & VOLUME
+       ============================================================ -->
+  <div id="tabContent_keyword" class="hidden">
+
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-slate-500 text-sm">Danh sách từ khóa SEO/SEM, volume tìm kiếm, độ khó và mức độ cạnh tranh.</p>
+      <div class="flex items-center gap-2">
+        <button onclick="aiSuggestKeywords()" class="ai-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <i class="fas fa-magic"></i> AI Gợi ý từ khóa
+        </button>
+        <button onclick="addKeyword()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <i class="fas fa-plus"></i> Thêm từ khóa
+        </button>
+      </div>
+    </div>
+
+    <div class="section-card p-0">
+      <div class="overflow-x-auto">
+        <table class="media-table w-full text-sm" style="min-width:1000px">
+          <thead>
+            <tr>
+              <th class="px-3 py-3 text-center w-10">#</th>
+              <th class="px-3 py-3 text-left">Từ khóa</th>
+              <th class="px-3 py-3 text-right">Volume/tháng</th>
+              <th class="px-3 py-3 text-right">CPC (đ)</th>
+              <th class="px-3 py-3 text-center">Độ khó (1-100)</th>
+              <th class="px-3 py-3 text-center">Cạnh tranh</th>
+              <th class="px-3 py-3 text-center">Loại từ khóa</th>
+              <th class="px-3 py-3 text-center">Ưu tiên</th>
+              <th class="px-3 py-3 text-left">Ghi chú</th>
+              <th class="px-3 py-3 w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="keywordTbody">
+            <tr><td colspan="9" class="py-10 text-center text-slate-400">
+              <i class="fas fa-search text-3xl mb-2 block text-slate-300"></i>
+              Chưa có từ khóa nào. Bấm "+ Thêm từ khóa" để bắt đầu.
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card mt-4">
+      <div class="section-title" style="margin-bottom:10px">Ghi chú Keyword</div>
+      <textarea id="f_keywordNotes" rows="3" placeholder="Ghi chú về chiến lược từ khóa, nguồn data, tool sử dụng..."
+        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: SHEET 5 – PHÂN TÍCH TARGET AUDIENCE
+       ============================================================ -->
+  <div id="tabContent_audience" class="hidden">
+    <div class="flex justify-end mb-3">
+      <button onclick="aiSuggestAudience()" class="ai-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <i class="fas fa-magic"></i> AI Gợi ý đối tượng theo ngành
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-5">
+
+      <!-- Left: Demographics + Interests -->
+      <div>
+        <div class="section-card">
+          <div class="section-title">Nhân khẩu học</div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tuổi tối thiểu</label>
+              <input id="f_audienceAgeMin" type="number" min="13" max="65" value="18"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tuổi tối đa</label>
+              <input id="f_audienceAgeMax" type="number" min="13" max="65" value="45"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Giới tính</label>
+              <select id="f_audienceGender" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                <option value="all">Tất cả</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Thu nhập</label>
+              <input id="f_audienceIncome" type="text" placeholder="VD: 10-30 triệu/tháng"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+            <div class="col-span-2">
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Khu vực địa lý</label>
+              <input id="f_audienceLocations" type="text" placeholder="VD: TP.HCM, Hà Nội, Đà Nẵng"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+            <div class="col-span-2">
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Học vấn</label>
+              <input id="f_audienceEducation" type="text" placeholder="VD: Đại học, Cao đẳng trở lên"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card mt-0">
+          <div class="section-title">Thiết bị sử dụng</div>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" id="device_mobile" class="accent-blue-600" checked> 📱 Mobile
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" id="device_desktop" class="accent-blue-600"> 💻 Desktop
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" id="device_tablet" class="accent-blue-600"> 📟 Tablet
+            </label>
+          </div>
+        </div>
+
+        <div class="section-card mt-0">
+          <div class="section-title">Sở thích & Quan tâm</div>
+          <div class="flex flex-wrap gap-2 mb-4" id="interestsContainer">
+            <!-- Generated by JS below -->
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Sở thích khác (nhập tự do)</label>
+            <textarea id="f_audienceCustomInterests" rows="2"
+              placeholder="VD: Quan tâm đến organic food, yoga, wellness..."
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+          </div>
+          <div class="mt-3">
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Hành vi & Đặc điểm</label>
+            <textarea id="f_audienceBehaviors" rows="2"
+              placeholder="VD: Hay mua hàng online, thích review sản phẩm, theo dõi influencer..."
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Personas -->
+      <div>
+        <div class="section-card">
+          <div class="section-title">
+            Chân dung khách hàng (Buyer Persona)
+            <button onclick="addPersona()" class="text-xs btn-primary px-3 py-1 rounded-lg font-medium flex items-center gap-1">
+              <i class="fas fa-plus text-xs"></i> Thêm Persona
+            </button>
+          </div>
+          <div id="personasContainer">
+            <div class="text-slate-400 text-sm text-center py-8 italic">Chưa có persona nào. Bấm "+ Thêm Persona".</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: SHEET 6 – CONTENT & DESIGN ADS
+       ============================================================ -->
+  <div id="tabContent_content" class="hidden">
+    <div class="flex justify-end mb-3">
+      <button onclick="aiSuggestContent()" class="ai-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <i class="fas fa-magic"></i> AI Gợi ý Content Pillars & Tone
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-5">
+
+      <!-- Left: Content Pillars + Tone -->
+      <div>
+        <div class="section-card">
+          <div class="section-title">
+            Content Pillars
+            <button onclick="addContentPillar()" class="text-xs btn-primary px-3 py-1 rounded-lg font-medium flex items-center gap-1">
+              <i class="fas fa-plus text-xs"></i> Thêm Pillar
+            </button>
+          </div>
+          <div id="pillarsContainer">
+            <div class="text-slate-400 text-sm text-center py-8 italic">Chưa có pillar nào. Bấm "+ Thêm Pillar".</div>
+          </div>
+        </div>
+
+        <div class="section-card mt-0">
+          <div class="section-title">Tone of Voice</div>
+          <div class="flex flex-wrap gap-2 mb-4" id="toneContainer">
+            <!-- Generated by JS below -->
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Ghi chú thêm về giọng văn</label>
+            <textarea id="f_adCopyNotes" rows="3"
+              placeholder="VD: Sử dụng ngôn ngữ gần gũi, tránh từ ngữ chuyên môn khó hiểu, ưu tiên storytelling..."
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Visual + Design -->
+      <div>
+        <div class="section-card">
+          <div class="section-title">Định hướng Visual</div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Phong cách thiết kế</label>
+              <input id="f_visualStyle" type="text" placeholder="VD: Minimalist, Bold, Lifestyle, Corporate..."
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Màu sắc chủ đạo</label>
+              <input id="f_visualColors" type="text" placeholder="VD: Xanh navy #1e40af, Trắng, Vàng gold..."
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Mood & Feel</label>
+              <input id="f_visualMood" type="text" placeholder="VD: Luxury, Fresh, Energetic, Warm, Trust..."
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card mt-0">
+          <div class="section-title">CTA & Headline mẫu</div>
+          <textarea id="f_ctaExamples" rows="4"
+            placeholder="VD:&#10;- Mua ngay – Giảm 30% hôm nay!&#10;- Đăng ký nhận tư vấn miễn phí&#10;- Khám phá ngay →&#10;- Nhận ưu đãi đặc biệt"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+        </div>
+
+        <div class="section-card mt-0">
+          <div class="section-title">Ghi chú Design</div>
+          <textarea id="f_designNotes" rows="3"
+            placeholder="VD: Banner size 1200x628, 1080x1080. Ảnh phải có người thật. Logo đặt góc phải trên..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none mb-3"></textarea>
+          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Định hướng Video / Motion</label>
+          <textarea id="f_videoDirection" rows="3"
+            placeholder="VD: Video 15s, hook 3 giây đầu mạnh, có phụ đề, kết thúc CTA rõ ràng..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PREVIEW VIEW
+     ============================================================ -->
+<div id="previewView" class="hidden bg-slate-200 min-h-screen py-8">
+  <div id="previewContent" class="max-w-4xl mx-auto"></div>
+</div>
+
+<!-- ============================================================
+     TEMPLATE SELECTION MODAL
+     ============================================================ -->
+<div id="templateModal" class="hidden modal-overlay">
+  <div class="modal-box w-full max-w-3xl">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fas fa-layer-group text-blue-600"></i> Chọn template để bắt đầu
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">Template sẽ điền sẵn dữ liệu mẫu cho tất cả 6 sheet</p>
+      </div>
+      <button onclick="closeTemplateModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-3 gap-4 mb-5">
+        <!-- Template 1: E-commerce -->
+        <div class="template-card border-2 border-pink-200 hover:border-pink-400 bg-pink-50 hover:bg-pink-100 rounded-xl p-4 cursor-pointer transition-all"
+             onclick="loadTemplate('ecommerce_fashion')">
+          <div class="text-3xl mb-2">👗</div>
+          <h3 class="font-bold text-pink-800 mb-1">E-commerce – Thời Trang</h3>
+          <p class="text-xs text-pink-600 mb-3">Ra mắt BST, tăng doanh số online. FB + IG + TikTok + Google.</p>
+          <div class="flex flex-wrap gap-1">
+            <span class="text-xs bg-pink-200 text-pink-700 px-2 py-0.5 rounded-full">Facebook</span>
+            <span class="text-xs bg-pink-200 text-pink-700 px-2 py-0.5 rounded-full">TikTok</span>
+            <span class="text-xs bg-pink-200 text-pink-700 px-2 py-0.5 rounded-full">Instagram</span>
+            <span class="text-xs bg-pink-200 text-pink-700 px-2 py-0.5 rounded-full">Google</span>
+          </div>
+          <div class="mt-3 text-xs text-pink-500 font-medium">
+            <i class="fas fa-check-circle mr-1"></i>6 sheets · 5 kênh · 6 keywords · 2 personas
+          </div>
+        </div>
+        <!-- Template 2: SaaS B2B -->
+        <div class="template-card border-2 border-blue-200 hover:border-blue-400 bg-blue-50 hover:bg-blue-100 rounded-xl p-4 cursor-pointer transition-all"
+             onclick="loadTemplate('saas_b2b')">
+          <div class="text-3xl mb-2">💼</div>
+          <h3 class="font-bold text-blue-800 mb-1">SaaS – B2B Lead Gen</h3>
+          <p class="text-xs text-blue-600 mb-3">Tìm kiếm doanh nghiệp cho phần mềm CRM. Google + YouTube + Facebook.</p>
+          <div class="flex flex-wrap gap-1">
+            <span class="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full">Google Search</span>
+            <span class="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full">YouTube</span>
+            <span class="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full">Facebook</span>
+            <span class="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full">SEO</span>
+          </div>
+          <div class="mt-3 text-xs text-blue-500 font-medium">
+            <i class="fas fa-check-circle mr-1"></i>6 sheets · 5 kênh · 7 keywords · 2 personas
+          </div>
+        </div>
+        <!-- Template 3: F&B -->
+        <div class="template-card border-2 border-amber-200 hover:border-amber-400 bg-amber-50 hover:bg-amber-100 rounded-xl p-4 cursor-pointer transition-all"
+             onclick="loadTemplate('fnb_coffee')">
+          <div class="text-3xl mb-2">☕</div>
+          <h3 class="font-bold text-amber-800 mb-1">F&B – Khai Trương Cà Phê</h3>
+          <p class="text-xs text-amber-600 mb-3">Brand awareness + foot traffic cho chuỗi cà phê mới. FB + TikTok + Zalo + OOH.</p>
+          <div class="flex flex-wrap gap-1">
+            <span class="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">TikTok</span>
+            <span class="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">Facebook</span>
+            <span class="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">Zalo</span>
+            <span class="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">OOH</span>
+          </div>
+          <div class="mt-3 text-xs text-amber-600 font-medium">
+            <i class="fas fa-check-circle mr-1"></i>6 sheets · 6 kênh · 6 keywords · 2 personas
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+        <button onclick="startBlankQuote()"
+          class="flex-1 py-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 text-slate-500 hover:text-blue-600 text-sm font-medium flex items-center justify-center gap-2 transition-all">
+          <i class="fas fa-file-alt"></i> Tạo từ đầu (Blank)
+        </button>
+        <button onclick="closeTemplateModal()" class="px-5 py-3 rounded-xl border border-slate-200 text-sm text-slate-500 hover:bg-slate-50">
+          Hủy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SETTINGS MODAL
+     ============================================================ -->
+<div id="settingsModal" class="hidden modal-overlay">
+  <div class="modal-box w-full max-w-2xl">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <i class="fas fa-cog text-blue-600"></i> Cài đặt hệ thống
+      </h2>
+      <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-600 text-xl">×</button>
+    </div>
+    <div class="p-6">
+      <div class="mb-6">
+        <h3 class="font-semibold text-blue-800 mb-3 border-l-4 border-blue-600 pl-3 text-sm">Thông tin Agency</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Tên Agency / Công ty</label>
+            <input id="s_agencyName" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Địa chỉ</label>
+            <input id="s_agencyAddress" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Điện thoại</label>
+            <input id="s_agencyPhone" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Email</label>
+            <input id="s_agencyEmail" type="email" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Website</label>
+            <input id="s_agencyWebsite" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Mã số thuế</label>
+            <input id="s_agencyTaxCode" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-slate-500 mb-1">URL Logo</label>
+            <input id="s_agencyLogoUrl" type="text" placeholder="https://..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-semibold text-blue-800 mb-3 border-l-4 border-blue-600 pl-3 text-sm">Mặc định báo giá</h3>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Agency Fee mặc định (%)</label>
+            <input id="s_agencyFeeRate" type="number" min="0" max="50" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">VAT mặc định (%)</label>
+            <input id="s_vatRate" type="number" min="0" max="20" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Tiền tố số báo giá</label>
+            <input id="s_quotePrefix" type="text" placeholder="MP" maxlength="6" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 uppercase">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+      <button onclick="closeSettings()" class="px-5 py-2 rounded-lg border border-slate-200 text-sm hover:bg-slate-50">Hủy</button>
+      <button onclick="saveSettings()" class="btn-primary px-5 py-2 rounded-lg text-sm font-medium">
+        <i class="fas fa-save mr-1.5"></i> Lưu cài đặt
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DELETE MODAL
+     ============================================================ -->
+<div id="deleteModal" class="hidden modal-overlay">
+  <div class="modal-box w-full max-w-md">
+    <div class="p-6 text-center">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-trash text-red-500 text-2xl"></i>
+      </div>
+      <h3 class="font-bold text-slate-800 text-lg mb-2">Xác nhận xóa</h3>
+      <p class="text-slate-500 text-sm mb-1">Bạn có chắc muốn xóa báo giá:</p>
+      <p id="deleteQuoteName" class="font-medium text-slate-700 mb-4"></p>
+      <p class="text-red-500 text-sm mb-6">Hành động này không thể hoàn tác.</p>
+      <div class="flex gap-3 justify-center">
+        <button onclick="closeDeleteModal()" class="px-6 py-2 rounded-lg border border-slate-200 text-sm hover:bg-slate-50">Hủy</button>
+        <button onclick="doDelete()" class="btn-danger px-6 py-2 rounded-lg text-sm font-medium">
+          <i class="fas fa-trash mr-1.5"></i> Xóa
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 transition-all duration-300 px-5 py-3 rounded-xl text-white font-medium shadow-xl bg-emerald-500" style="transform:translateY(100px);opacity:0"></div>
+
+<script src="app.js"></script>
+<script>
+/* ---- Generate interest tags ---- */
+(function() {
+  const container = document.getElementById('interestsContainer');
+  if (!container) return;
+  INTEREST_CATEGORIES.forEach((cat, idx) => {
+    const label = document.createElement('label');
+    label.className = 'interest-tag';
+    label.innerHTML = `<input type="checkbox" id="interest_${idx}" class="accent-blue-600"> ${cat}`;
+    label.querySelector('input').addEventListener('change', function() {
+      label.classList.toggle('selected', this.checked);
+    });
+    container.appendChild(label);
+  });
+})();
+
+/* ---- Generate tone checkboxes ---- */
+(function() {
+  const container = document.getElementById('toneContainer');
+  if (!container) return;
+  TONE_OPTIONS.forEach(t => {
+    const label = document.createElement('label');
+    label.className = 'flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg cursor-pointer text-sm transition-colors';
+    label.innerHTML = `<input type="checkbox" id="tone_${t.id}" class="accent-blue-600"> ${t.label}`;
+    container.appendChild(label);
+  });
+})();
+
+/* ---- Override showView to toggle nav bar states ---- */
+const _showView = showView;
+showView = function(view) {
+  _showView(view);
+  document.getElementById('dashActions').classList.toggle('hidden', view !== 'dashboard');
+  document.getElementById('editorActions').classList.toggle('hidden', view !== 'editor');
+  document.getElementById('previewActions').classList.toggle('hidden', view !== 'preview');
+  if (view === 'editor' && state.currentQuote) {
+    document.getElementById('editorStatusSelect').value = state.currentQuote.status;
+  }
+};
+
+/* ---- Override updateMediaSummary to also update footer ---- */
+const _updateMediaSummary = updateMediaSummary;
+updateMediaSummary = function() {
+  _updateMediaSummary();
+  const q = state.currentQuote;
+  if (!q) return;
+  const sub = q.items.reduce((s, i) => s + (i.budget || 0), 0);
+  const el = document.getElementById('mediaSubtotalFooter');
+  if (el) el.textContent = formatCurrency(sub) + ' đ';
+  const el2 = document.getElementById('mediaChannelCount');
+  if (el2) el2.textContent = q.items.length + ' kênh';
+};
+
+/* ---- Quick add channel helper ---- */
+function quickAddChannel(channelId) {
+  const ch = CHANNELS.find(c => c.id === channelId);
+  if (!ch) return;
+  const item = newMediaItem();
+  item.channelId   = ch.id;
+  item.channelName = ch.name;
+  item.format      = ch.formats[0];
+  item.pricingType = ch.defPricing;
+  item.unitPrice   = ch.defPrice;
+  item.quantity    = ch.defPricing === 'CPM' ? 1000000 : (ch.defPricing === 'CPV' ? 500000 : 3000);
+  item.budget      = calcItemBudget(item);
+  state.currentQuote.items.push(item);
+  renderMediaRows();
+}
+
+/* ---- Go back from preview ---- */
+function goBackFromPreview() {
+  if (state.editingId) editQuote(state.editingId);
+  else if (state.currentQuote) renderEditor();
+  else renderDashboard();
+  document.getElementById('previewActions').classList.add('hidden');
+  document.getElementById('editorActions').classList.remove('hidden');
+}
+
+/* ---- Sync status select → quote.status ---- */
+document.getElementById('editorStatusSelect').addEventListener('change', function() {
+  if (state.currentQuote) {
+    state.currentQuote.status = this.value;
+    const el = document.getElementById('f_status');
+    if (el) el.value = this.value;
+  }
+});
+</script>
+</body>
+</html>
